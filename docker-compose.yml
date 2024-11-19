@@ -1,0 +1,33 @@
+services:
+  db:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: emarket
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  backend:
+    build: ./server
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+    environment:
+      HOST: db
+      DB_USER: root
+      DB_PASS: 12345678
+      DB_NAME: emarket
+      DIALECT: mysql
+
+  frontend:
+    build: ./shop
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
