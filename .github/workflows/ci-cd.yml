@@ -31,7 +31,7 @@ jobs:
       working-directory: ./shop
       run: |
         npm install
-        npx update-browserslist-db@latest --update-db
+        npx update-browserslist-db@latest --force
 
     - name: Run tests (Frontend)
       working-directory: ./shop
