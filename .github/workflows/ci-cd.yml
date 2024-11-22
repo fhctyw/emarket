@@ -31,6 +31,7 @@ jobs:
       working-directory: ./shop
       run: |
         npm install
+        npm audit fix
         npx update-browserslist-db@latest --update-db
 
     - name: Run tests (Frontend)
