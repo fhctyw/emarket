@@ -29,7 +29,9 @@ jobs:
 
     - name: Install dependencies (Frontend)
       working-directory: ./shop
-      run: npm install
+      run: |
+        npm install
+        npx update-browserslist-db@latest
 
     - name: Run tests (Frontend)
       working-directory: ./shop
