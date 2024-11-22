@@ -1,0 +1,110 @@
+name: CI/CD Pipeline for AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Select what to build/deploy: frontend, backend, or both'
+        required: true
+        default: 'both'
+
+jobs:
+  build-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '14'
+
+    - name: Install dependencies (Backend)
+      if: ${{ inputs.target == 'backend' || inputs.target == 'both' }}
+      working-directory: ./server
+      run: npm install
+
+    - name: Run tests (Backend)
+      if: ${{ inputs.target == 'backend' || inputs.target == 'both' }}
+      working-directory: ./server
+      run: npm test
+
+    - name: Install dependencies (Frontend)
+      if: ${{ inputs.target == 'frontend' || inputs.target == 'both' }}
+      working-directory: ./shop
+      run: npm install
+
+  dockerize:
+    name: Dockerize and Push Images
+    runs-on: ubuntu-latest
+    needs: build-test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@4
+
+    - name: Log in to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and tag Backend image
+      if: ${{ inputs.target == 'backend' || inputs.target == 'both' }}
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/emarket-backend:latest ./server
+
+    - name: Build and tag Frontend image
+      if: ${{ inputs.target == 'frontend' || inputs.target == 'both' }}
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/emarket-frontend:latest ./shop
+
+    - name: Push Backend image to DockerHub
+      if: ${{ inputs.target == 'backend' || inputs.target == 'both' }}
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/emarket-backend:latest
+
+    - name: Push Frontend image to DockerHub
+      if: ${{ inputs.target == 'frontend' || inputs.target == 'both' }}
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/emarket-frontend:latest
+
+  deploy:
+    name: Deploy to AWS EC2
+    runs-on: ubuntu-latest
+    needs: dockerize
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.2.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          echo "Navigating to Docker Compose directory..."
+          cd ~/emarket
+
+          echo "Pulling updated Docker images..."
+          if [[ "${{ inputs.target }}" == "backend" || "${{ inputs.target }}" == "both" ]]; then
+            docker pull ${{ secrets.DOCKER_USERNAME }}/emarket-backend:latest || exit 1
+          fi
+
+          if [[ "${{ inputs.target }}" == "frontend" || "${{ inputs.target }}" == "both" ]]; then
+            docker pull ${{ secrets.DOCKER_USERNAME }}/emarket-frontend:latest || exit 1
+          fi
+
+          echo "Restarting Docker Compose services..."
+          docker-compose down || true
+          docker-compose up -d || exit 1
+
+          echo "Deployment completed successfully!"
