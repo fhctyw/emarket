@@ -80,6 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: dockerize
 
+    steps:
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v1.2.0
       with:
