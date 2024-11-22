@@ -6,7 +6,7 @@
   "scripts": {
     "start": "nodemon src/app.js --exec  \"npm run lint && node\"",
     "lint": "eslint src/**/*.js",
-    "test": "echo \"No test specified\"(pass)",
+    "test": "echo \"No test specified\"",
     "seed": "node ./seed"
   },
   "author": "",
