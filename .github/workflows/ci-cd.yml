@@ -40,6 +40,11 @@ jobs:
       working-directory: ./shop
       run: npm install
 
+    - name: Run tests (Frontend)
+      if: ${{ inputs.target == 'frontend' || inputs.target == 'both' }}
+      working-directory: ./shop
+      run: npm test
+
   dockerize:
     name: Dockerize and Push Images
     runs-on: ubuntu-latest
