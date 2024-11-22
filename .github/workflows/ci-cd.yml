@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      target:
-        description: 'Select what to build/deploy: frontend, backend, or both'
-        required: true
-        default: 'both'
 
 jobs:
   build-test:
@@ -26,22 +20,18 @@ jobs:
         node-version: '14'
 
     - name: Install dependencies (Backend)
-      if: ${{ inputs.target == 'backend' || inputs.target == 'both' }}
       working-directory: ./server
       run: npm install
 
     - name: Run tests (Backend)
-      if: ${{ inputs.target == 'backend' || inputs.target == 'both' }}
       working-directory: ./server
       run: npm test
 
     - name: Install dependencies (Frontend)
-      if: ${{ inputs.target == 'frontend' || inputs.target == 'both' }}
       working-directory: ./shop
       run: npm install
 
     - name: Run tests (Frontend)
-      if: ${{ inputs.target == 'frontend' || inputs.target == 'both' }}
       working-directory: ./shop
       run: npm test
 
@@ -61,22 +51,18 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build and tag Backend image
-      if: ${{ inputs.target == 'backend' || inputs.target == 'both' }}
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/emarket-backend:latest ./server
 
     - name: Build and tag Frontend image
-      if: ${{ inputs.target == 'frontend' || inputs.target == 'both' }}
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/emarket-frontend:latest ./shop
 
     - name: Push Backend image to DockerHub
-      if: ${{ inputs.target == 'backend' || inputs.target == 'both' }}
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/emarket-backend:latest
 
     - name: Push Frontend image to DockerHub
-      if: ${{ inputs.target == 'frontend' || inputs.target == 'both' }}
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/emarket-frontend:latest
 
@@ -98,13 +84,8 @@ jobs:
           cd ~/emarket
 
           echo "Pulling updated Docker images..."
-          if [[ "${{ inputs.target }}" == "backend" || "${{ inputs.target }}" == "both" ]]; then
-            docker pull ${{ secrets.DOCKER_USERNAME }}/emarket-backend:latest || exit 1
-          fi
-
-          if [[ "${{ inputs.target }}" == "frontend" || "${{ inputs.target }}" == "both" ]]; then
-            docker pull ${{ secrets.DOCKER_USERNAME }}/emarket-frontend:latest || exit 1
-          fi
+          docker pull ${{ secrets.DOCKER_USERNAME }}/emarket-backend:latest || exit 1
+          docker pull ${{ secrets.DOCKER_USERNAME }}/emarket-frontend:latest || exit 1
 
           echo "Restarting Docker Compose services..."
           docker-compose down || true
