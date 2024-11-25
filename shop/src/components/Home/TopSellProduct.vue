@@ -78,7 +78,7 @@ export default {
       cartComponentKey: 0,
       wishlistKey: 2,
       topSellLimit: 8,
-      topSellViewTitle: "Top Selling Products",
+      topSellViewTitle: "Lisnychuk Arsen IT-41",
     };
   },
   async mounted() {
